@@ -1,0 +1,147 @@
+options:
+  width: 800
+  height: 800
+  plot_scale: 0.65
+  connect_type: circle
+  unit_type: pixels
+  title: "SSD Performance Comparison"
+  subtitle: "Comparing three SSD vendors across key performance metrics"
+
+data:
+  series:
+    - name: "Vendor A (Budget)"
+      data:
+        "Cost": 120
+        "4K Read IOPS": 25000
+        "4K Write IOPS": 20000
+        "1M Read MBps": 500
+        "1M Write MBps": 450
+      style:
+        line:
+          color: "#2563EB"
+          thickness: 2.0
+        fill:
+          color: "#2563EB"
+          opacity: 0.15
+        point:
+          shape: circle
+          size: 4.0
+          color: "#2563EB"
+          show: true
+
+    - name: "Vendor B (Balanced)"
+      data:
+        "Cost": 250
+        "4K Read IOPS": 60000
+        "4K Write IOPS": 55000
+        "1M Read MBps": 1800
+        "1M Write MBps": 1600
+      style:
+        line:
+          color: "#10B981"
+          thickness: 2.0
+        fill:
+          color: "#10B981"
+          opacity: 0.15
+        point:
+          shape: square
+          size: 4.0
+          color: "#10B981"
+          show: true
+
+    - name: "Vendor C (Performance)"
+      data:
+        "Cost": 450
+        "4K Read IOPS": 95000
+        "4K Write IOPS": 85000
+        "1M Read MBps": 3200
+        "1M Write MBps": 2800
+      style:
+        line:
+          color: "#DC2626"
+          thickness: 2.0
+        fill:
+          color: "#DC2626"
+          opacity: 0.15
+        point:
+          shape: diamond
+          size: 4.0
+          color: "#DC2626"
+          show: true
+
+  axes:
+    - name: "Cost"
+      max: 500
+      options:
+        scale: linear
+        show_name: true
+        show_axis: true
+        ticks:
+          major_count: 5
+          minor_count: 4
+          show_major_ticks: true
+          show_minor_ticks: true
+          show_labels: true
+
+    - name: "4K Read IOPS"
+      max: 100000
+      options:
+        scale: linear
+        show_name: true
+        show_axis: true
+        ticks:
+          major_count: 5
+          minor_count: 4
+          show_major_ticks: true
+          show_minor_ticks: true
+          show_labels: true
+
+    - name: "4K Write IOPS"
+      max: 90000
+      options:
+        scale: linear
+        show_name: true
+        show_axis: true
+        ticks:
+          major_count: 5
+          minor_count: 4
+          show_major_ticks: true
+          show_minor_ticks: true
+          show_labels: true
+
+    - name: "1M Read MBps"
+      max: 3500
+      options:
+        scale: linear
+        show_name: true
+        show_axis: true
+        ticks:
+          major_count: 5
+          minor_count: 4
+          show_major_ticks: true
+          show_minor_ticks: true
+          show_labels: true
+
+    - name: "1M Write MBps"
+      max: 3000
+      options:
+        scale: linear
+        show_name: true
+        show_axis: true
+        ticks:
+          major_count: 5
+          minor_count: 4
+          show_major_ticks: true
+          show_minor_ticks: true
+          show_labels: true
+
+legend:
+  show: true
+  placement: right
+  style:
+    size: 12
+    color: "#000000"
+  outline:
+    color: "#000000"
+    thickness: 0.5
+  padding: 3.0

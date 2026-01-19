@@ -1,0 +1,9 @@
+# Air configuration
+.air.toml
+
+# Temporary build directory
+tmp/
+
+test/
+
+.vscode/
