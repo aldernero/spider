@@ -4,8 +4,7 @@ A Go library and CLI tool for generating spider plots (radar charts) with **inde
 
 ## Features
 
-- **Independent Axis Scales**: Each axis can have its own min/max values, perfect for comparing metrics with different ranges
-- **Multiple Scale Types**: Support for linear, base-10 logarithmic, and base-2 logarithmic scales
+- **Independent Axis Scales**: Each axis can have its own min/max values, perfect for comparing metrics with different ranges and visualizing tradeoffs
 - **Flexible Configuration**: Create charts programmatically or from JSON/YAML configuration files
 - **Rich Styling Options**: Customize line colors, fill opacity, point shapes, and more
 - **Automatic Scaling**: Auto-calculate axis maximums from series data when not specified
@@ -35,42 +34,38 @@ import (
 )
 
 func main() {
-    // Create a chart
-    chart := spider.NewChart(spider.ChartOptions{
-        Width:       500,
-        Height:      500,
-        PlotScale:   0.7,
-        ConnectType: spider.ConnectTypePolygon,
-        UnitType:    spider.UnitTypePixels,
-        Title:       "Performance Metrics",
-    }, spider.ChartData{
-        Series: []spider.Series{
-            {
-                Name: "System A",
-                Data: map[string]float64{
-                    "throughput": 1000000,
-                    "latency":    50,
-                    "cost":      5000,
-                },
-            },
-        },
-        Axes: []spider.Axis{
-            {Name: "throughput", Max: floatPtr(2000000)},
-            {Name: "latency", Max: floatPtr(100)},
-            {Name: "cost", Max: floatPtr(10000)},
-        },
-    })
-
-    // Draw and save
-    c := canvas.New(chart.CanvasWidth(), chart.CanvasHeight())
-    ctx := canvas.NewContext(c)
-    chart.Draw(ctx)
-    renderers.Write("chart.png", c, chart.Resolution())
+  // Create a chart
+  chart := spider.NewChart()
+  // add axes
+  chart.AddAxis("axis1")
+  chart.AddAxis("axis2")
+  chart.AddAxis("axis3")
+  chart.AddAxis("axis4")
+  chart.AddAxis("axis5")
+  // add series with datapoints
+  chart.AddSeries("series1", map[string]float64{
+    "axis1": 1000,
+    "axis2": 2.0,
+    "axis3": 3.0,
+    "axis4": 1000000,
+    "axis5": 5.0,
+  })
+  chart.AddSeries("series2", map[string]float64{
+    "axis1": 1500,
+    "axis2": 1.0,
+    "axis3": 2.5,
+    "axis4": 2100000,
+    "axis5": 12.0,
+  })
+  // customize
+	chart.Options.Subtitle = "Subtitle"
+	chart.Options.Title = "Title"
+  // save chart
+	if err := chart.Save("output.png"); err != nil {
+		log.Fatalf("Failed to save chart: %v", err)
+	}
 }
 
-func floatPtr(f float64) *float64 {
-    return &f
-}
 ```
 
 ### Using Configuration Files
@@ -143,11 +138,7 @@ The library supports both JSON and YAML configuration files. The structure match
 - **data.series**: Array of data series with styling options
 - **data.axes**: Array of axis definitions with scale and tick configurations
 
-### Scale Types
-
-- `linear`: Standard linear scale (default)
-- `log10`: Base-10 logarithmic scale
-- `log2`: Base-2 logarithmic scale
+See the `examples` folder for more details.
 
 ### Point Shapes
 
@@ -160,7 +151,6 @@ The library supports both JSON and YAML configuration files. The structure match
 ### Legend Placement
 
 - `top`, `bottom`, `left`, `right`
-- `top-left`, `top-right`, `bottom-left`, `bottom-right`
 
 ## API Overview
 
@@ -191,7 +181,6 @@ See `cmd/main.go` for a complete programmatic example, or check the `cmd/spider-
 
 - Maximum 50 axes per chart
 - Maximum 20 series per chart
-- Log scales require positive maximum values
 
 ## License
 

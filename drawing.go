@@ -55,7 +55,7 @@ func (c *Chart) drawSubtitle(ctx *canvas.Context) {
 func (c *Chart) drawPlotBackground(ctx *canvas.Context) {
 	ctx.SetFillColor(canvas.Transparent)
 	ctx.SetStrokeColor(canvas.Black)
-	ctx.SetStrokeWidth(0.5)
+	ctx.SetStrokeWidth(c.Options.PlotOptions.OutlineThickness)
 
 	centerX := c.plotRect.X0 + c.plotRect.W()/2
 	centerY := c.plotRect.Y0 + c.plotRect.H()/2
@@ -309,7 +309,6 @@ func (c *Chart) drawLegend(ctx *canvas.Context) {
 		cnvs, width = c.canvasString(series.Name)
 		dw += width
 		rt.WriteCanvas(cnvs, canvas.FontMiddle)
-		//rt.WriteString(series.Name)
 		if (legend.Placement == LegendPlacementRight || legend.Placement == LegendPlacementLeft) && i < len(c.Data.Series)-1 {
 			rt.WriteString("\n")
 			dw = 0.0
@@ -349,14 +348,37 @@ func (c *Chart) drawLegendSeriesPath(seriesIndex int) (*canvas.Canvas, float64) 
 		LineThickness:      c.Data.Series[seriesIndex].Options.LineThickness,
 		FillOpacity:        c.Data.Series[seriesIndex].Options.FillOpacity,
 	}
-	cnvs := canvas.New(10, 10)
-	ctx := canvas.NewContext(cnvs)
-	// Use the series colors (defaults should already be applied in drawSeries)
-	// But apply defaults here too in case drawLegend is called independently
 	nColors := len(c.Options.Colors)
+	nPointMarkers := len(c.Options.PointMarkers)
 	if seriesOpts.LineColor == "" {
 		seriesOpts.LineColor = c.Options.Colors[seriesIndex%nColors]
 	}
+	if seriesOpts.PointStrokeColor == "" {
+		seriesOpts.PointStrokeColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	if seriesOpts.PointFillColor == "" {
+		seriesOpts.PointFillColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	if seriesOpts.LineColor == "" {
+		seriesOpts.LineColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	if seriesOpts.PointStrokeColor == "" {
+		seriesOpts.PointStrokeColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	if seriesOpts.PointFillColor == "" {
+		seriesOpts.PointFillColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	if seriesOpts.PointShape == "" {
+		seriesOpts.PointShape = c.Options.PointMarkers[seriesIndex%nPointMarkers]
+	}
+	if seriesOpts.PointSize == 0 {
+		seriesOpts.PointSize = DefaultPointSize
+	}
+	if seriesOpts.PointLineThickness == 0 {
+		seriesOpts.PointLineThickness = DefaultSeriesLineThickness
+	}
+	cnvs := canvas.New(10, 10)
+	ctx := canvas.NewContext(cnvs)
 	ctx.SetStrokeColor(seriesOpts.LineColor.ToCanvasColor())
 	ctx.SetStrokeWidth(c.Options.LegendOptions.LineThickness)
 	ctx.MoveTo(0, 0)

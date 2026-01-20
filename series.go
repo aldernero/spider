@@ -26,7 +26,7 @@ func DefaultSeriesOptions() SeriesOptions {
 		PointLineThickness: 0.0,
 		PointStrokeColor:   "",
 		PointFillColor:     "",
-		PointFillOpacity:   0.0,
+		PointFillOpacity:   1.0,
 		PointShape:         "",
 	}
 }
