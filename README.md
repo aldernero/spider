@@ -180,10 +180,11 @@ If an axis doesn't specify a `max` value, it will be automatically calculated fr
 
 See `cmd/main.go` for a complete programmatic example, or check the `cmd/spider-cli` directory for the CLI tool implementation.
 
-Some output from the `examples\` folder:
-<img width="945" height="945" alt="output" src="https://github.com/user-attachments/assets/dc42b4a9-1362-4c5c-ae4c-f1f88d70ad37" />
-<img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/7dde1c32-4bba-46fd-a2a8-bdf010cb64ca" />
-<img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/5a40596c-3be8-43a1-8e7c-888e52e19dbb" />
+Some output from the `examples/` folder:
+
+<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/dc42b4a9-1362-4c5c-ae4c-f1f88d70ad37" />
+<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/7dde1c32-4bba-46fd-a2a8-bdf010cb64ca" />
+<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/5a40596c-3be8-43a1-8e7c-888e52e19dbb" />
 
 
 ## Limitations
