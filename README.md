@@ -4,7 +4,7 @@ A Go library and CLI tool for generating spider plots (radar charts) with **inde
 
 ## Features
 
-- **Independent Axis Scales**: Each axis can have its own min/max values, perfect for comparing metrics with different ranges and visualizing tradeoffs
+- **Independent Axis Scales**: Each axis can have its own maximum value, perfect for comparing metrics with different ranges and visualizing tradeoffs
 - **Flexible Configuration**: Create charts programmatically or from JSON/YAML configuration files
 - **Rich Styling Options**: Customize line colors, fill opacity, point shapes, and more
 - **Automatic Scaling**: Auto-calculate axis maximums from series data when not specified
