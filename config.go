@@ -42,12 +42,18 @@ func NewChartFromFile(filename string) (*Chart, error) {
 
 // NewChartFromJSON creates a chart from JSON data
 func NewChartFromJSON(data []byte) (*Chart, error) {
-	var chart Chart
+	// Start with defaults
+	chart := Chart{
+		Options: DefaultChartOptions(),
+		Data:    ChartData{},
+	}
+
+	// Unmarshal config file, which will override defaults for specified fields
 	if err := json.Unmarshal(data, &chart); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
-	// Apply defaults
+	// Apply defaults to any nested fields that might still be zero values
 	chart = *applyDefaults(&chart)
 
 	// Validate
@@ -60,12 +66,18 @@ func NewChartFromJSON(data []byte) (*Chart, error) {
 
 // NewChartFromYAML creates a chart from YAML data
 func NewChartFromYAML(data []byte) (*Chart, error) {
-	var chart Chart
+	// Start with defaults
+	chart := Chart{
+		Options: DefaultChartOptions(),
+		Data:    ChartData{},
+	}
+
+	// Unmarshal config file, which will override defaults for specified fields
 	if err := yaml.Unmarshal(data, &chart); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal YAML: %w", err)
 	}
 
-	// Apply defaults
+	// Apply defaults to any nested fields that might still be zero values
 	chart = *applyDefaults(&chart)
 
 	// Validate
@@ -74,6 +86,27 @@ func NewChartFromYAML(data []byte) (*Chart, error) {
 	}
 
 	return &chart, nil
+}
+
+func GenerateDefaultConfigJSON(filename string) error {
+	chart := NewChart()
+
+	jsonData, err := json.MarshalIndent(chart, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+	return os.WriteFile(filename, jsonData, 0644)
+}
+
+func GenerateDefaultConfigYAML(filename string) error {
+	chart := NewChart()
+
+	yamlData, err := yaml.Marshal(chart)
+	if err != nil {
+		return fmt.Errorf("failed to marshal YAML: %w", err)
+	}
+
+	return os.WriteFile(filename, yamlData, 0644)
 }
 
 // applyDefaults applies default values to a chart where they are missing

@@ -14,14 +14,28 @@ type Font struct {
 	Color    Color   `json:"color" yaml:"color"` // Font color
 }
 
-func (f *Font) loadFontFace() (*canvas.FontFace, error) {
+func (f *Font) loadFontFace(fontName string, fontPath string) (*canvas.FontFace, error) {
 	if f.FontPath == "" && f.FontName == "" {
 		// Try system fonts first (more reliable, avoids CFF errors)
 		// Try common system fonts in order of preference
-		systemFonts := []string{"Liberation Sans", "DejaVu Sans", "Helvetica", "Arial"}
+		var systemFonts []string
+		if fontName != "" {
+			systemFonts = []string{fontName}
+		} else {
+			systemFonts = []string{"Liberation Sans", "DejaVu Sans"}
+		}
 		for _, fontName := range systemFonts {
 			fontFamily := canvas.NewFontFamily(fontName)
 			if err := fontFamily.LoadSystemFont(fontName, canvas.FontRegular); err == nil {
+				face := fontFamily.Face(f.Size, f.Color.ToCanvasColor(), canvas.FontRegular, canvas.FontNormal)
+				if face != nil {
+					return face, nil
+				}
+			}
+		}
+		if fontPath != "" {
+			fontFamily := canvas.NewFontFamily(fontPath)
+			if err := fontFamily.LoadFontFile(fontPath, canvas.FontRegular); err == nil {
 				face := fontFamily.Face(f.Size, f.Color.ToCanvasColor(), canvas.FontRegular, canvas.FontNormal)
 				if face != nil {
 					return face, nil

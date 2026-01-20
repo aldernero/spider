@@ -3,6 +3,11 @@ package spider
 import "math"
 
 const (
+	// DefaultChartWidth is the default width for the chart in millimeters
+	DefaultChartWidth = 200.0
+
+	// DefaultChartHeight is the default height for the chart in millimeters
+	DefaultChartHeight = 200.0
 
 	// AutoscaleAxisPadding is the default padding for the axis max value
 	AutoscaleAxisPaddingFactor = 1.15
@@ -66,6 +71,9 @@ const (
 
 	// DefaultSeriesLineThickness is the default line thickness for series in millimeters
 	DefaultSeriesLineThickness = 0.75
+
+	// DefaultLegendLineLength is the default line length for legend in millimeters
+	DefaultLegendLineLength = 7.0
 
 	// DefaultLegendLineThickness is the default line thickness for legend in millimeters
 	DefaultLegendLineThickness = 0.6

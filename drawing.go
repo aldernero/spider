@@ -2,7 +2,6 @@ package spider
 
 import (
 	"fmt"
-	"image/color"
 	"math"
 
 	"github.com/tdewolff/canvas"
@@ -11,6 +10,8 @@ import (
 // drawBackground draws the chart background
 func (c *Chart) drawBackground(ctx *canvas.Context) {
 	// Check if background is transparent before converting (case-insensitive)
+	ctx.SetStrokeColor(canvas.Transparent)
+	ctx.SetStrokeWidth(0)
 	ctx.SetFillColor(c.Options.Background.ToCanvasColor())
 	ctx.DrawPath(0, 0, canvas.Rectangle(c.Width(), c.Height()))
 	ctx.Fill()
@@ -76,14 +77,10 @@ func (c *Chart) drawPlotBackground(ctx *canvas.Context) {
 
 // drawAxes draws all axes and their labels
 func (c *Chart) drawAxes(ctx *canvas.Context) {
-	fmt.Println("drawing axes", len(c.Data.Axes))
 	ctx.SetStrokeColor(canvas.Black)
 	ctx.SetStrokeWidth(DefaultAxisLineThickness)
 
 	nAxes := len(c.Data.Axes)
-	if nAxes == 0 {
-		return
-	}
 
 	centerX := c.plotRect.X0 + c.plotRect.W()/2
 	centerY := c.plotRect.Y0 + c.plotRect.H()/2
@@ -161,7 +158,6 @@ func (c *Chart) drawAxes(ctx *canvas.Context) {
 func (c *Chart) drawSeries(ctx *canvas.Context) {
 	nAxes := len(c.Data.Axes)
 
-	dt := Tau / float64(nAxes)
 	seriesData := getAllSeriesData(c.Data.Series)
 
 	centerX := c.plotRect.X0 + c.plotRect.W()/2
@@ -170,134 +166,209 @@ func (c *Chart) drawSeries(ctx *canvas.Context) {
 
 	// Calculate starting angle (same as in drawAxes) - start at top (π/2)
 	startTheta := math.Pi / 2
+	dt := Tau / float64(nAxes)
 
-	for _, series := range c.Data.Series {
+	nColors := len(c.Options.Colors)
+	nPointMarkers := len(c.Options.PointMarkers)
+	for i := range c.Data.Series {
+		series := &c.Data.Series[i]
+		// Apply default colors and point markers if not set
+		seriesOpts := SeriesOptions{
+			LineColor:          series.Options.LineColor,
+			FillColor:          series.Options.FillColor,
+			PointStrokeColor:   series.Options.PointStrokeColor,
+			PointFillColor:     series.Options.PointFillColor,
+			PointFillOpacity:   series.Options.PointFillOpacity,
+			PointShape:         series.Options.PointShape,
+			PointSize:          series.Options.PointSize,
+			PointLineThickness: series.Options.PointLineThickness,
+			LineThickness:      series.Options.LineThickness,
+			FillOpacity:        series.Options.FillOpacity,
+		}
+		if seriesOpts.LineColor == "" {
+			seriesOpts.LineColor = c.Options.Colors[i%nColors]
+		}
+		if seriesOpts.PointStrokeColor == "" {
+			seriesOpts.PointStrokeColor = c.Options.Colors[i%nColors]
+		}
+		if seriesOpts.PointFillColor == "" {
+			seriesOpts.PointFillColor = c.Options.Colors[i%nColors]
+		}
+		if series.Options.LineColor == "" {
+			seriesOpts.LineColor = c.Options.Colors[i%nColors]
+		}
+		if series.Options.PointStrokeColor == "" {
+			seriesOpts.PointStrokeColor = c.Options.Colors[i%nColors]
+		}
+		if series.Options.PointFillColor == "" {
+			seriesOpts.PointFillColor = c.Options.Colors[i%nColors]
+		}
+		if series.Options.PointShape == "" {
+			seriesOpts.PointShape = c.Options.PointMarkers[i%nPointMarkers]
+		}
+		if series.Options.PointSize == 0 {
+			seriesOpts.PointSize = DefaultPointSize
+		}
+		if series.Options.PointLineThickness == 0 {
+			seriesOpts.PointLineThickness = DefaultSeriesLineThickness
+		}
 		// Calculate points for this series
 		points := make([]canvas.Point, nAxes)
 		theta := startTheta
-		for i, axis := range c.Data.Axes {
+		for j, axis := range c.Data.Axes {
 			max := axis.GetMax(seriesData)
 			value := series.GetDataValue(axis.Name)
-			scaledRadius := linmap(0, radius, 0, max, value)
-			points[i].X = centerX + scaledRadius*math.Cos(theta)
-			points[i].Y = centerY + scaledRadius*math.Sin(theta)
+			scaledRadius := linmap(0, max, 0, radius, value)
+			points[j].X = centerX + scaledRadius*math.Cos(theta)
+			points[j].Y = centerY + scaledRadius*math.Sin(theta)
 			theta += dt
 		}
-		//c.drawSingleSeries(ctx, series, dt, startTheta, seriesData)
-	}
-}
-
-// drawSingleSeries draws a single series
-func (c *Chart) drawSingleSeries(ctx *canvas.Context, series Series, dt float64, startTheta float64, seriesData []map[string]float64) {
-	nAxes := len(c.Data.Axes)
-	if nAxes == 0 {
-		return
-	}
-
-	centerX := c.plotRect.X0 + c.plotRect.W()/2
-	centerY := c.plotRect.Y0 + c.plotRect.H()/2
-	radius := c.Radius()
-
-	// Get series style with defaults
-	style := series.Options
-	if style.LineThickness == 0 {
-		style.LineThickness = DefaultSeriesLineThickness
-	}
-	if style.LineColor == "" {
-		style.LineColor = Color("#000000")
-	}
-
-	// Calculate points for this series
-	points := make([]canvas.Point, nAxes)
-	theta := startTheta
-
-	for i, axis := range c.Data.Axes {
-		max := axis.GetMax(seriesData)
-		value := series.GetDataValue(axis.Name)
-		scaledRadius := radius * axis.ScaleValue(value, max)
-
-		points[i].x = centerX + scaledRadius*math.Cos(theta)
-		points[i].y = centerY + scaledRadius*math.Sin(theta)
-		theta += dt
-	}
-
-	// Draw fill (if opacity > 0)
-	if style.FillOpacity > 0 {
-		c.drawSeriesFill(ctx, points, style.FillColor, style.FillOpacity)
-	}
-
-	// Draw line
-	drawSeriesLine(ctx, points, style.Line)
-
-	// Draw points
-	if style.ShowPoints && style.PointShape != PointShapeNone {
-		for _, point := range points {
-			// Skip drawing points at the center (check if distance from center is very small)
-			dx := point.x - centerX
-			dy := point.y - centerY
-			distance := math.Sqrt(dx*dx + dy*dy)
-			if distance < 0.1 { // Very close to center (0.1mm threshold)
-				continue
+		// draw series line
+		ctx.SetFillColor(seriesOpts.FillColor.ToCanvasColorWithOpacity(seriesOpts.FillOpacity))
+		ctx.SetStrokeColor(seriesOpts.LineColor.ToCanvasColor())
+		ctx.SetStrokeWidth(seriesOpts.LineThickness)
+		ctx.MoveTo(points[0].X, points[0].Y)
+		for j := 1; j < len(points); j++ {
+			ctx.LineTo(points[j].X, points[j].Y)
+		}
+		ctx.Close()
+		ctx.FillStroke()
+		// draw series points
+		if c.Options.ShowPointMarkers {
+			for _, point := range points {
+				c.drawSeriesPoint(ctx, point, seriesOpts)
 			}
-			drawPoint(ctx, point.x, point.y, style.PointSize, style.PointShape, style.PointStrokeColor.ToCanvasColor())
 		}
 	}
 }
 
-// drawSeriesFill draws the filled area for a series
-func (c *Chart) drawSeriesFill(ctx *canvas.Context, points []struct{ x, y float64 }, fill FillStyle) {
-	col := style.FillColor.ToCanvasColor()
-	// Convert to RGBA to apply opacity
-	if rgba, ok := col.(color.RGBA); ok {
-		rgba.A = uint8(float64(rgba.A) * style.FillOpacity)
-		ctx.SetFillColor(rgba)
-	} else {
-		ctx.SetFillColor(col)
+// drawSeriesPoint draws a point for a series
+func (c *Chart) drawSeriesPoint(ctx *canvas.Context, point canvas.Point, seriesOpts SeriesOptions) {
+	ctx.SetFillColor(seriesOpts.PointFillColor.ToCanvasColorWithOpacity(seriesOpts.PointFillOpacity))
+	ctx.SetStrokeColor(seriesOpts.PointStrokeColor.ToCanvasColor())
+	ctx.SetStrokeWidth(seriesOpts.PointLineThickness)
+
+	switch seriesOpts.PointShape {
+	case PointShapeCircle:
+		circle := canvas.Circle(seriesOpts.PointSize / 2)
+		ctx.DrawPath(point.X, point.Y, circle)
+		ctx.FillStroke()
+	case PointShapeSquare:
+		rect := canvas.Rectangle(seriesOpts.PointSize, seriesOpts.PointSize)
+		ctx.DrawPath(point.X-seriesOpts.PointSize/2, point.Y-seriesOpts.PointSize/2, rect)
+		ctx.FillStroke()
+	case PointShapeTriangle:
+		triangle := canvas.RegularPolygon(3, seriesOpts.PointSize/2, true)
+		ctx.DrawPath(point.X, point.Y, triangle)
+		ctx.FillStroke()
+	case PointShapeDiamond:
+		diamond := canvas.RegularPolygon(4, seriesOpts.PointSize/2, true)
+		ctx.DrawPath(point.X, point.Y, diamond)
+		ctx.FillStroke()
 	}
-	ctx.Fill()
 }
 
-// drawSeriesLine draws the line for a series
-func drawSeriesLine(ctx *canvas.Context, points []struct{ x, y float64 }, line LineStyle) {
-	if len(points) == 0 {
+// drawLegend draws the legend on the canvas
+func (c *Chart) drawLegend(ctx *canvas.Context) {
+	legend := c.Options.LegendOptions
+	if !legend.Show || len(c.Data.Series) == 0 {
 		return
 	}
 
-	ctx.SetStrokeColor(line.Color.ToCanvasColor())
-	ctx.SetStrokeWidth(line.Thickness)
-
-	ctx.MoveTo(points[0].x, points[0].y)
-	for i := 1; i < len(points); i++ {
-		ctx.LineTo(points[i].x, points[i].y)
+	var legendHorizontalTextAlignment canvas.TextAlign
+	var legendVerticalTextAlignment canvas.TextAlign
+	switch legend.Placement {
+	case LegendPlacementTop:
+		legendHorizontalTextAlignment = canvas.Center
+		legendVerticalTextAlignment = canvas.Bottom
+	case LegendPlacementBottom:
+		legendHorizontalTextAlignment = canvas.Center
+		legendVerticalTextAlignment = canvas.Top
+	case LegendPlacementLeft:
+		legendHorizontalTextAlignment = canvas.Right
+		legendVerticalTextAlignment = canvas.Center
+	case LegendPlacementRight:
+		legendHorizontalTextAlignment = canvas.Left
+		legendVerticalTextAlignment = canvas.Center
+	default:
+		legendHorizontalTextAlignment = canvas.Center
+		legendVerticalTextAlignment = canvas.Center
 	}
-	ctx.Close() // Connect back to start
-	ctx.Stroke()
+
+	// Draw legend items
+	rt := canvas.NewRichText(c.fonts["legend_label"])
+	textOptions := &canvas.TextOptions{
+		Linebreaker: canvas.KnuthLinebreaker{},
+	}
+	w := c.legendRect.W()
+	dw := 0.0
+	for i, series := range c.Data.Series {
+		cnvs, width := c.drawLegendSeriesPath(i)
+		dw += width
+		rt.WriteCanvas(cnvs, canvas.FontMiddle)
+		cnvs, width = c.canvasString(series.Name)
+		dw += width
+		rt.WriteCanvas(cnvs, canvas.FontMiddle)
+		//rt.WriteString(series.Name)
+		if (legend.Placement == LegendPlacementRight || legend.Placement == LegendPlacementLeft) && i < len(c.Data.Series)-1 {
+			rt.WriteString("\n")
+			dw = 0.0
+		} else {
+			cnvs, width := c.canvasString(" ")
+			dw += width
+			rt.WriteCanvas(cnvs, canvas.FontMiddle)
+		}
+		if dw > 0.85*w {
+			rt.WriteString("\n")
+			dw = 0.0
+		}
+	}
+	text := rt.ToText(c.legendRect.W(), c.legendRect.H(), legendHorizontalTextAlignment, legendVerticalTextAlignment, textOptions)
+	ctx.DrawText(c.legendRect.X0, c.legendRect.Y1, text)
 }
 
-// drawPoint draws a point with the specified shape
-func drawPoint(ctx *canvas.Context, x, y, size float64, shape PointShape, col color.Color) {
-	ctx.SetFillColor(col)
-	ctx.SetStrokeColor(col)
-	ctx.SetStrokeWidth(1)
+func (c *Chart) canvasString(s string) (*canvas.Canvas, float64) {
+	cnvs := canvas.New(10, 10)
+	ctx := canvas.NewContext(cnvs)
+	ctx.DrawText(0, 0, canvas.NewTextLine(c.fonts["legend_label"], s, canvas.Center))
+	cnvs.Fit(0)
+	width, _ := cnvs.Size()
+	return cnvs, width
+}
 
-	switch shape {
-	case PointShapeCircle:
-		circle := canvas.Circle(size / 2)
-		ctx.DrawPath(x, y, circle)
-		ctx.Fill()
-	case PointShapeSquare:
-		rect := canvas.Rectangle(size, size)
-		ctx.DrawPath(x-size/2, y-size/2, rect)
-		ctx.Fill()
-	case PointShapeTriangle:
-		triangle := canvas.RegularPolygon(3, size/2, true)
-		ctx.DrawPath(x, y, triangle)
-		ctx.Fill()
-	case PointShapeDiamond:
-		diamond := canvas.RegularPolygon(4, size/2, true)
-		ctx.DrawPath(x, y, diamond)
-		ctx.Fill()
+func (c *Chart) drawLegendSeriesPath(seriesIndex int) (*canvas.Canvas, float64) {
+	seriesOpts := SeriesOptions{
+		LineColor:          c.Data.Series[seriesIndex].Options.LineColor,
+		FillColor:          c.Data.Series[seriesIndex].Options.FillColor,
+		PointStrokeColor:   c.Data.Series[seriesIndex].Options.PointStrokeColor,
+		PointFillColor:     c.Data.Series[seriesIndex].Options.PointFillColor,
+		PointFillOpacity:   c.Data.Series[seriesIndex].Options.PointFillOpacity,
+		PointShape:         c.Data.Series[seriesIndex].Options.PointShape,
+		PointSize:          c.Data.Series[seriesIndex].Options.PointSize,
+		PointLineThickness: c.Data.Series[seriesIndex].Options.PointLineThickness,
+		LineThickness:      c.Data.Series[seriesIndex].Options.LineThickness,
+		FillOpacity:        c.Data.Series[seriesIndex].Options.FillOpacity,
 	}
+	cnvs := canvas.New(10, 10)
+	ctx := canvas.NewContext(cnvs)
+	// Use the series colors (defaults should already be applied in drawSeries)
+	// But apply defaults here too in case drawLegend is called independently
+	nColors := len(c.Options.Colors)
+	if seriesOpts.LineColor == "" {
+		seriesOpts.LineColor = c.Options.Colors[seriesIndex%nColors]
+	}
+	ctx.SetStrokeColor(seriesOpts.LineColor.ToCanvasColor())
+	ctx.SetStrokeWidth(c.Options.LegendOptions.LineThickness)
+	ctx.MoveTo(0, 0)
+	ctx.LineTo(c.Options.LegendOptions.LineLength, 0)
+	ctx.Stroke()
+	if c.Options.ShowPointMarkers {
+		center := canvas.Point{X: c.Options.LegendOptions.LineLength / 2, Y: 0}
+		c.drawSeriesPoint(ctx, center, seriesOpts)
+	}
+	cnvs.Fit(0)
+	width, _ := cnvs.Size()
+	return cnvs, width
 }
 
 // Linspace creates a slice of linearly distributed values in a range, inclusive of the end value

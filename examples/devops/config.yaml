@@ -1,142 +1,63 @@
 options:
-  width: 900
-  height: 900
-  plot_scale: 0.65
-  connect_type: polygon
-  unit_type: pixels
+  width: 250
+  height: 250
   title: "Software Version Comparison"
   subtitle: "Cloud Deployment Metrics - Version 1.0 vs 2.0"
+  plot_options:
+    scale: 0.65
+    connect_type: polygon
+  axis_options:
+    major_ticks: 3
+    minor_ticks: 3
+    major_tick_length: 7
+    minor_tick_length: 3.5
+  legend_options:
+    placement: right
 
 data:
+  axes:
+    - name: "Latency"
+      max: 10000
+    - name: "Reliability"
+      max: 100
+    - name: "Cloud Cost"
+      max: 5000
+    - name: "Scalability"
+      max: 100000
+    - name: "Security Score"
+      max: 100
+    - name: "Developer Experience"
+      max: 60
+
   series:
     - name: "Version 1.0"
       data:
-        "Performance": 3500
+        "Latency": 8500
         "Reliability": 95
-        "Cloud Cost": 1200
-        "Scalability": 25000
+        "Cloud Cost": 3800
+        "Scalability": 60000
         "Security Score": 85
         "Developer Experience": 45
-      style:
-        line:
-          color: "#3B82F6"
-          thickness: 2.5
-        fill:
-          color: "#3B82F6"
-          opacity: 0.2
-        point:
-          shape: circle
-          size: 4.5
-          color: "#3B82F6"
-          show: true
+      options:
+        line_color: "#3B82F6"
+        fill_color: "#3B82F6"
+        point_color: "#3B82F6"
+        point_fill_color: "#3B82F6"
+        fill_opacity: 0.7
+        point_fill_opacity: 0.7
 
     - name: "Version 2.0"
       data:
-        "Performance": 8500
-        "Reliability": 99.5
-        "Cloud Cost": 3800
+        "Latency": 5000
+        "Reliability": 99
+        "Cloud Cost": 2500
         "Scalability": 85000
         "Security Score": 95
-        "Developer Experience": 15
-      style:
-        line:
-          color: "#EF4444"
-          thickness: 2.5
-        fill:
-          color: "#EF4444"
-          opacity: 0.2
-        point:
-          shape: square
-          size: 4.5
-          color: "#EF4444"
-          show: true
-
-  axes:
-    - name: "Performance"
-      max: 10000
+        "Developer Experience": 40
       options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-    - name: "Reliability"
-      max: 100
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-    - name: "Cloud Cost"
-      max: 5000
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-    - name: "Scalability"
-      max: 100000
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-    - name: "Security Score"
-      max: 100
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-    - name: "Developer Experience"
-      max: 60
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-        ticks:
-          major_count: 5
-          minor_count: 4
-          show_major_ticks: true
-          show_minor_ticks: true
-          show_labels: true
-
-legend:
-  show: true
-  placement: right
-  style:
-    size: 12
-    color: "#000000"
-  outline:
-    color: "#000000"
-    thickness: 0.5
-  padding: 3.0
+        line_color: "#EF4444"
+        fill_color: "#EF4444"
+        point_color: "#EF4444"
+        point_fill_color: "#EF4444"
+        point_fill_opacity: 0.7
+        fill_opacity: 0.7

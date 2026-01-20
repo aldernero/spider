@@ -2,6 +2,7 @@ package spider
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/tdewolff/canvas"
 )
@@ -20,27 +21,27 @@ func (e *ValidationError) Error() string {
 func (c *Chart) validate() error {
 	// Validate all fonts load correctly
 	c.fonts = make(map[string]*canvas.FontFace)
-	face, err := c.Options.TitleStyle.loadFontFace()
+	face, err := c.Options.TitleStyle.loadFontFace(c.Options.DefaultFontName, c.Options.DefaultFontPath)
 	if err != nil || face == nil {
 		return fmt.Errorf("failed to load title style font: %w", err)
 	}
 	c.fonts["title"] = face
-	face, err = c.Options.SubtitleStyle.loadFontFace()
+	face, err = c.Options.SubtitleStyle.loadFontFace(c.Options.DefaultFontName, c.Options.DefaultFontPath)
 	if err != nil || face == nil {
 		return fmt.Errorf("failed to load subtitle style font: %w", err)
 	}
 	c.fonts["subtitle"] = face
-	face, err = c.Options.AxisOptions.LabelStyle.loadFontFace()
+	face, err = c.Options.AxisOptions.LabelStyle.loadFontFace(c.Options.DefaultFontName, c.Options.DefaultFontPath)
 	if err != nil || face == nil {
 		return fmt.Errorf("failed to load axis label style font: %w", err)
 	}
 	c.fonts["axis_label"] = face
-	face, err = c.Options.AxisOptions.TickLabelStyle.loadFontFace()
+	face, err = c.Options.AxisOptions.TickLabelStyle.loadFontFace(c.Options.DefaultFontName, c.Options.DefaultFontPath)
 	if err != nil || face == nil {
 		return fmt.Errorf("failed to load tick label style font: %w", err)
 	}
 	c.fonts["tick_label"] = face
-	face, err = c.Options.LegendOptions.LegendStyle.loadFontFace()
+	face, err = c.Options.LegendOptions.LegendStyle.loadFontFace(c.Options.DefaultFontName, c.Options.DefaultFontPath)
 	if err != nil || face == nil {
 		return fmt.Errorf("failed to load legend label style font: %w", err)
 	}
@@ -59,7 +60,6 @@ func (c *Chart) validate() error {
 			Message: "at least 3 axes are required",
 		}
 	}
-	fmt.Println("axes count", len(c.Data.Axes))
 	if len(c.Data.Axes) > MaxAxes {
 		return &ValidationError{
 			Field:   "axes",
@@ -79,7 +79,6 @@ func (c *Chart) validate() error {
 	axisNames := make([]string, len(c.Data.Axes))
 	axisNameMap := make(map[string]bool)
 	for i, axis := range c.Data.Axes {
-		fmt.Println("axis", axis.Name)
 		if axis.Name == "" {
 			return &ValidationError{
 				Field:   "axes",
@@ -129,14 +128,25 @@ func (c *Chart) validate() error {
 		}
 	}
 
-	return nil
-}
-
-// getAllSeriesData extracts all data maps from series for max calculation
-func getAllSeriesData(series []Series) []map[string]float64 {
-	result := make([]map[string]float64, len(series))
-	for i, s := range series {
-		result[i] = s.Data
+	// Validate legend options
+	if c.Options.LegendOptions.MinWidth <= 0 {
+		c.Options.LegendOptions.MinWidth = 0
 	}
-	return result
+	if c.Options.LegendOptions.MaxWidth <= 0 {
+		c.Options.LegendOptions.MaxWidth = math.Inf(1)
+	}
+	if c.Options.LegendOptions.MinHeight <= 0 {
+		c.Options.LegendOptions.MinHeight = 0
+	}
+	if c.Options.LegendOptions.MaxHeight <= 0 {
+		c.Options.LegendOptions.MaxHeight = math.Inf(1)
+	}
+	if c.Options.LegendOptions.MinWidth > c.Options.LegendOptions.MaxWidth {
+		return &ValidationError{
+			Field:   "options.legend_options.min_width",
+			Message: "min_width must be less than max_width",
+		}
+	}
+
+	return nil
 }

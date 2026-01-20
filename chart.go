@@ -9,26 +9,32 @@ import (
 
 // ChartOptions represents options for the overall chart
 type ChartOptions struct {
-	Width          float64       `json:"width" yaml:"width"`                                       // Chart width
-	Height         float64       `json:"height" yaml:"height"`                                     // Chart height
-	Background     Color         `json:"background,omitempty" yaml:"background,omitempty"`         // Background color
-	Title          string        `json:"title,omitempty" yaml:"title,omitempty"`                   // Chart title
-	TitleStyle     Font          `json:"title_style,omitempty" yaml:"title_style,omitempty"`       // Title font style
-	TitleMargin    float64       `json:"title_margin" yaml:"title_margin"`                         // Title margin in millimeters
-	Subtitle       string        `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`             // Chart subtitle
-	SubtitleStyle  Font          `json:"subtitle_style,omitempty" yaml:"subtitle_style,omitempty"` // Subtitle font style
-	SubtitleMargin float64       `json:"subtitle_margin" yaml:"subtitle_margin"`                   // Subtitle margin in millimeters
-	PlotOptions    PlotOptions   `json:"plot_options" yaml:"plot_options"`                         // Plot options
-	AxisOptions    AxisOptions   `json:"axis_options" yaml:"axis_options"`                         // Axis options
-	SeriesOptions  SeriesOptions `json:"series_options" yaml:"series_options"`                     // Series options
-	LegendOptions  LegendOptions `json:"legend_options" yaml:"legend_options"`                     // Legend options
-	PageMargin     float64       `json:"page_margin" yaml:"page_margin"`                           // Page margin in millimeters
-	ShowTitle      bool          `json:"show_title" yaml:"show_title"`                             // Whether to show the title
-	ShowSubtitle   bool          `json:"show_subtitle" yaml:"show_subtitle"`                       // Whether to show the subtitle
-	ShowLegend     bool          `json:"show_legend" yaml:"show_legend"`                           // Whether to show the legend
-	ShowAxisNames  bool          `json:"show_axis_labels" yaml:"show_axis_labels"`                 // Whether to show the axis labels
-	ShowTicks      bool          `json:"show_ticks" yaml:"show_ticks"`                             // Whether to show the ticks
-	ShowTickLabels bool          `json:"show_tick_labels" yaml:"show_tick_labels"`                 // Whether to show the tick labels
+	Width            float64       `json:"width" yaml:"width"`                                       // Chart width
+	Height           float64       `json:"height" yaml:"height"`                                     // Chart height
+	Background       Color         `json:"background,omitempty" yaml:"background,omitempty"`         // Background color
+	Foreground       Color         `json:"foreground,omitempty" yaml:"foreground,omitempty"`         // Foreground color
+	Title            string        `json:"title,omitempty" yaml:"title,omitempty"`                   // Chart title
+	TitleStyle       Font          `json:"title_style,omitempty" yaml:"title_style,omitempty"`       // Title font style
+	TitleMargin      float64       `json:"title_margin" yaml:"title_margin"`                         // Title margin in millimeters
+	Subtitle         string        `json:"subtitle,omitempty" yaml:"subtitle,omitempty"`             // Chart subtitle
+	SubtitleStyle    Font          `json:"subtitle_style,omitempty" yaml:"subtitle_style,omitempty"` // Subtitle font style
+	SubtitleMargin   float64       `json:"subtitle_margin" yaml:"subtitle_margin"`                   // Subtitle margin in millimeters
+	PlotOptions      PlotOptions   `json:"plot_options" yaml:"plot_options"`                         // Plot options
+	AxisOptions      AxisOptions   `json:"axis_options" yaml:"axis_options"`                         // Axis options
+	SeriesOptions    SeriesOptions `json:"series_options" yaml:"series_options"`                     // Series options
+	LegendOptions    LegendOptions `json:"legend_options" yaml:"legend_options"`                     // Legend options
+	Colors           []Color       `json:"colors" yaml:"colors"`                                     // Colors for the series
+	PointMarkers     []PointShape  `json:"point_markers" yaml:"point_markers"`                       // Point markers for the series
+	PageMargin       float64       `json:"page_margin" yaml:"page_margin"`                           // Page margin in millimeters
+	DefaultFontName  string        `json:"default_font_name" yaml:"default_font_name"`               // Default font name
+	DefaultFontPath  string        `json:"default_font_path" yaml:"default_font_path"`               // Default font path
+	ShowTitle        bool          `json:"show_title" yaml:"show_title"`                             // Whether to show the title
+	ShowSubtitle     bool          `json:"show_subtitle" yaml:"show_subtitle"`                       // Whether to show the subtitle
+	ShowLegend       bool          `json:"show_legend" yaml:"show_legend"`                           // Whether to show the legend
+	ShowAxisNames    bool          `json:"show_axis_labels" yaml:"show_axis_labels"`                 // Whether to show the axis labels
+	ShowTicks        bool          `json:"show_ticks" yaml:"show_ticks"`                             // Whether to show the ticks
+	ShowTickLabels   bool          `json:"show_tick_labels" yaml:"show_tick_labels"`                 // Whether to show the tick labels
+	ShowPointMarkers bool          `json:"show_point_markers" yaml:"show_point_markers"`             // Whether to show the point markers
 }
 
 // DefaultChartOptions returns default chart options
@@ -36,20 +42,26 @@ type ChartOptions struct {
 // DefaultChartOptions returns default chart options
 func DefaultChartOptions() ChartOptions {
 	return ChartOptions{
-		Background:     Color("transparent"),
-		TitleStyle:     DefaultTitleStyle(),
-		SubtitleStyle:  DefaultSubtitleStyle(),
-		PlotOptions:    DefaultPlotOptions(),
-		AxisOptions:    DefaultAxisOptions(),
-		SeriesOptions:  DefaultSeriesOptions(),
-		LegendOptions:  DefaultLegendOptions(),
-		PageMargin:     DefaultPageMargin,
-		ShowTitle:      true,
-		ShowSubtitle:   true,
-		ShowLegend:     true,
-		ShowAxisNames:  true,
-		ShowTicks:      true,
-		ShowTickLabels: true,
+		Width:            DefaultChartWidth,
+		Height:           DefaultChartHeight,
+		Background:       Color("white"),
+		Foreground:       Color("black"),
+		TitleStyle:       DefaultTitleStyle(),
+		SubtitleStyle:    DefaultSubtitleStyle(),
+		PlotOptions:      DefaultPlotOptions(),
+		AxisOptions:      DefaultAxisOptions(),
+		SeriesOptions:    DefaultSeriesOptions(),
+		LegendOptions:    DefaultLegendOptions(),
+		Colors:           DefaultSeriesColors,
+		PointMarkers:     DefaultPointMarkers,
+		PageMargin:       DefaultPageMargin,
+		ShowTitle:        true,
+		ShowSubtitle:     true,
+		ShowLegend:       true,
+		ShowAxisNames:    true,
+		ShowTicks:        true,
+		ShowTickLabels:   true,
+		ShowPointMarkers: true,
 	}
 }
 
@@ -89,8 +101,8 @@ func DefaultPlotOptions() PlotOptions {
 
 // ChartData represents the data in the chart
 type ChartData struct {
-	Series []Series `json:"series" yaml:"series"` // Data series
 	Axes   []Axis   `json:"axes" yaml:"axes"`     // Axes definitions
+	Series []Series `json:"series" yaml:"series"` // Data series
 }
 
 // Chart represents a complete spider chart
@@ -241,21 +253,39 @@ func (c *Chart) calcRects() {
 	subtitleBottom := c.plotRect.Y1 + c.Options.PlotOptions.Margin
 	switch c.Options.LegendOptions.Placement {
 	case LegendPlacementTop:
+		targetHeight := c.Options.LegendOptions.LegendStyle.Size*mmPerPt*smidge + c.Options.LegendOptions.Padding
+		if targetHeight < c.Options.LegendOptions.MinHeight {
+			targetHeight = c.Options.LegendOptions.MinHeight
+			c.plotRect.Y0 -= targetHeight
+			c.plotRect.Y1 -= targetHeight
+		}
 		c.legendRect = canvas.Rect{ // above plot + plot margin
 			X0: c.Options.PageMargin,
 			Y0: c.plotRect.Y1 + c.Options.PlotOptions.Margin,
 			X1: w - c.Options.PageMargin,
-			Y1: c.plotRect.Y1 + c.Options.PlotOptions.Margin + c.Options.LegendOptions.LegendStyle.Size*mmPerPt*smidge,
+			Y1: c.plotRect.Y1 + c.Options.PlotOptions.Margin + targetHeight,
 		}
 		subtitleBottom = c.legendRect.Y1 + c.Options.SubtitleMargin
 	case LegendPlacementBottom:
+		// targetHeight := c.plotRect.Y0 - c.Options.PageMargin
+		// if targetHeight < c.Options.LegendOptions.MinHeight {
+		// 	targetHeight = c.Options.LegendOptions.MinHeight
+		// 	c.plotRect.Y0 += targetHeight
+		// 	c.plotRect.Y1 += targetHeight
+		// }
 		c.legendRect = canvas.Rect{
 			X0: c.Options.PageMargin,
-			Y0: c.plotRect.Y0 - c.Options.PlotOptions.Margin - c.Options.LegendOptions.LegendStyle.Size*mmPerPt*smidge,
+			Y0: c.Options.PageMargin,
 			X1: w - c.Options.PageMargin,
 			Y1: c.plotRect.Y0 - c.Options.PlotOptions.Margin,
 		}
 	case LegendPlacementLeft:
+		targetWidth := c.plotRect.X0 - c.Options.PageMargin
+		if targetWidth < c.Options.LegendOptions.MinWidth {
+			targetWidth = c.Options.LegendOptions.MinWidth
+			c.plotRect.X0 += targetWidth
+			c.plotRect.X1 += targetWidth
+		}
 		c.legendRect = canvas.Rect{
 			X0: c.Options.PageMargin,
 			Y0: c.plotRect.Y0,
@@ -263,6 +293,12 @@ func (c *Chart) calcRects() {
 			Y1: c.plotRect.Y1,
 		}
 	case LegendPlacementRight:
+		targetWidth := w - c.plotRect.X1 - c.Options.PageMargin
+		if targetWidth < c.Options.LegendOptions.MinWidth {
+			targetWidth = c.Options.LegendOptions.MinWidth
+			c.plotRect.X1 -= targetWidth
+			c.plotRect.X0 -= targetWidth
+		}
 		c.legendRect = canvas.Rect{
 			X0: c.plotRect.X1 + c.Options.PlotOptions.Margin,
 			Y0: c.plotRect.Y0,

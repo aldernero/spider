@@ -11,8 +11,24 @@ import (
 // It will be converted to color.Color when used
 type Color string
 
+// DefaultColors is a list of default colors for the series
+var DefaultSeriesColors = []Color{
+	Color("#677ad1"),
+	Color("#6fac5d"),
+	Color("#b94663"),
+	Color("#9750a1"),
+	Color("#bc7d39"),
+}
+
+var DefaultPointMarkers = []PointShape{
+	PointShapeCircle,
+	PointShapeSquare,
+	PointShapeTriangle,
+	PointShapeDiamond,
+}
+
 // ToCanvasColor converts a Color string to a color.Color
-// Supports hex colors (#RRGGBB, #RRGGBBAA), named colors, and "rgba(r,g,b,a)" format
+// Supports hex colors (#RRGGBB, #RRGGBBAA) and named colors
 func (c Color) ToCanvasColor() color.Color {
 	if c == "" || strings.ToLower(string(c)) == "transparent" {
 		return canvas.Transparent
@@ -28,6 +44,27 @@ func (c Color) ToCanvasColor() color.Color {
 	// Default to transparent if parsing fails
 	return canvas.Transparent
 }
+
+func (c Color) ToCanvasColorWithOpacity(opacity float64) color.Color {
+	col := c.ToCanvasColor()
+	r, g, b, _ := col.RGBA()
+	// RGBA() returns uint32 values in range 0-65535, convert to uint8 (0-255)
+	// Divide by 257 for accurate conversion (65535/255 = 257)
+	// Clamp opacity to valid range [0, 1]
+	if opacity < 0 {
+		opacity = 0
+	} else if opacity > 1 {
+		opacity = 1
+	}
+	return color.RGBA{
+		R: uint8(r / 257),
+		G: uint8(g / 257),
+		B: uint8(b / 257),
+		A: uint8(opacity * 255),
+	}
+}
+
+// Color utility functions
 
 // parseHexColor parses a hex color string (#RRGGBB or #RRGGBBAA)
 func parseHexColor(hex string) color.Color {
@@ -87,22 +124,155 @@ func parseNamedColor(name string) *color.Color {
 	// Convert to lowercase for case-insensitive matching
 	nameLower := strings.ToLower(name)
 
+	// from https://github.com/tdewolff/canvas/blob/master/colors_defs.go
 	colors := map[string]color.Color{
-		"black":       canvas.Black,
-		"white":       canvas.White,
-		"red":         canvas.Red,
-		"green":       canvas.Green,
-		"blue":        canvas.Blue,
-		"yellow":      canvas.Yellow,
-		"cyan":        canvas.Cyan,
-		"magenta":     canvas.Magenta,
-		"gray":        canvas.Gray,
-		"grey":        canvas.Gray,
-		"orange":      color.RGBA{R: 255, G: 165, B: 0, A: 255},
-		"purple":      color.RGBA{R: 128, G: 0, B: 128, A: 255},
-		"pink":        color.RGBA{R: 255, G: 192, B: 203, A: 255},
-		"brown":       color.RGBA{R: 165, G: 42, B: 42, A: 255},
-		"transparent": canvas.Transparent,
+		"aliceblue":            canvas.Aliceblue,
+		"antiquewhite":         canvas.Antiquewhite,
+		"aqua":                 canvas.Aqua,
+		"aquamarine":           canvas.Aquamarine,
+		"azure":                canvas.Azure,
+		"beige":                canvas.Beige,
+		"bisque":               canvas.Bisque,
+		"black":                canvas.Black,
+		"blanchedalmond":       canvas.Blanchedalmond,
+		"blue":                 canvas.Blue,
+		"blueviolet":           canvas.Blueviolet,
+		"brown":                canvas.Brown,
+		"burlywood":            canvas.Burlywood,
+		"cadetblue":            canvas.Cadetblue,
+		"chartreuse":           canvas.Chartreuse,
+		"chocolate":            canvas.Chocolate,
+		"coral":                canvas.Coral,
+		"cornflowerblue":       canvas.Cornflowerblue,
+		"cornsilk":             canvas.Cornsilk,
+		"crimson":              canvas.Crimson,
+		"cyan":                 canvas.Cyan,
+		"darkblue":             canvas.Darkblue,
+		"darkcyan":             canvas.Darkcyan,
+		"darkgoldenrod":        canvas.Darkgoldenrod,
+		"darkgray":             canvas.Darkgray,
+		"darkgreen":            canvas.Darkgreen,
+		"darkgrey":             canvas.Darkgrey,
+		"darkkhaki":            canvas.Darkkhaki,
+		"darkmagenta":          canvas.Darkmagenta,
+		"darkolivegreen":       canvas.Darkolivegreen,
+		"darkorange":           canvas.Darkorange,
+		"darkorchid":           canvas.Darkorchid,
+		"darkred":              canvas.Darkred,
+		"darksalmon":           canvas.Darksalmon,
+		"darkseagreen":         canvas.Darkseagreen,
+		"darkslateblue":        canvas.Darkslateblue,
+		"darkslategray":        canvas.Darkslategray,
+		"darkslategrey":        canvas.Darkslategrey,
+		"darkturquoise":        canvas.Darkturquoise,
+		"darkviolet":           canvas.Darkviolet,
+		"deeppink":             canvas.Deeppink,
+		"deepskyblue":          canvas.Deepskyblue,
+		"dimgray":              canvas.Dimgray,
+		"dimgrey":              canvas.Dimgrey,
+		"dodgerblue":           canvas.Dodgerblue,
+		"firebrick":            canvas.Firebrick,
+		"floralwhite":          canvas.Floralwhite,
+		"forestgreen":          canvas.Forestgreen,
+		"fuchsia":              canvas.Fuchsia,
+		"gainsboro":            canvas.Gainsboro,
+		"ghostwhite":           canvas.Ghostwhite,
+		"gold":                 canvas.Gold,
+		"goldenrod":            canvas.Goldenrod,
+		"gray":                 canvas.Gray,
+		"green":                canvas.Green,
+		"greenyellow":          canvas.Greenyellow,
+		"grey":                 canvas.Grey,
+		"honeydew":             canvas.Honeydew,
+		"hotpink":              canvas.Hotpink,
+		"indianred":            canvas.Indianred,
+		"indigo":               canvas.Indigo,
+		"ivory":                canvas.Ivory,
+		"khaki":                canvas.Khaki,
+		"lavender":             canvas.Lavender,
+		"lavenderblush":        canvas.Lavenderblush,
+		"lawngreen":            canvas.Lawngreen,
+		"lemonchiffon":         canvas.Lemonchiffon,
+		"lightblue":            canvas.Lightblue,
+		"lightcoral":           canvas.Lightcoral,
+		"lightcyan":            canvas.Lightcyan,
+		"lightgoldenrodyellow": canvas.Lightgoldenrodyellow,
+		"lightgray":            canvas.Lightgray,
+		"lightgreen":           canvas.Lightgreen,
+		"lightgrey":            canvas.Lightgrey,
+		"lightpink":            canvas.Lightpink,
+		"lightsalmon":          canvas.Lightsalmon,
+		"lightseagreen":        canvas.Lightseagreen,
+		"lightskyblue":         canvas.Lightskyblue,
+		"lightslategray":       canvas.Lightslategray,
+		"lightslategrey":       canvas.Lightslategrey,
+		"lightsteelblue":       canvas.Lightsteelblue,
+		"lightyellow":          canvas.Lightyellow,
+		"lime":                 canvas.Lime,
+		"limegreen":            canvas.Limegreen,
+		"linen":                canvas.Linen,
+		"magenta":              canvas.Magenta,
+		"maroon":               canvas.Maroon,
+		"mediumaquamarine":     canvas.Mediumaquamarine,
+		"mediumblue":           canvas.Mediumblue,
+		"mediumorchid":         canvas.Mediumorchid,
+		"mediumpurple":         canvas.Mediumpurple,
+		"mediumseagreen":       canvas.Mediumseagreen,
+		"mediumslateblue":      canvas.Mediumslateblue,
+		"mediumspringgreen":    canvas.Mediumspringgreen,
+		"mediumturquoise":      canvas.Mediumturquoise,
+		"mediumvioletred":      canvas.Mediumvioletred,
+		"midnightblue":         canvas.Midnightblue,
+		"mintcream":            canvas.Mintcream,
+		"mistyrose":            canvas.Mistyrose,
+		"moccasin":             canvas.Moccasin,
+		"navajowhite":          canvas.Navajowhite,
+		"navy":                 canvas.Navy,
+		"oldlace":              canvas.Oldlace,
+		"olive":                canvas.Olive,
+		"olivedrab":            canvas.Olivedrab,
+		"orange":               canvas.Orange,
+		"orchid":               canvas.Orchid,
+		"palegoldenrod":        canvas.Palegoldenrod,
+		"palegreen":            canvas.Palegreen,
+		"paleturquoise":        canvas.Paleturquoise,
+		"palevioletred":        canvas.Palevioletred,
+		"papayawhip":           canvas.Papayawhip,
+		"peachpuff":            canvas.Peachpuff,
+		"peru":                 canvas.Peru,
+		"pink":                 canvas.Pink,
+		"plum":                 canvas.Plum,
+		"powderblue":           canvas.Powderblue,
+		"purple":               canvas.Purple,
+		"red":                  canvas.Red,
+		"rosybrown":            canvas.Rosybrown,
+		"royalblue":            canvas.Royalblue,
+		"saddlebrown":          canvas.Saddlebrown,
+		"salmon":               canvas.Salmon,
+		"sandybrown":           canvas.Sandybrown,
+		"seagreen":             canvas.Seagreen,
+		"seashell":             canvas.Seashell,
+		"sienna":               canvas.Sienna,
+		"silver":               canvas.Silver,
+		"skyblue":              canvas.Skyblue,
+		"slateblue":            canvas.Slateblue,
+		"slategray":            canvas.Slategray,
+		"slategrey":            canvas.Slategrey,
+		"snow":                 canvas.Snow,
+		"springgreen":          canvas.Springgreen,
+		"steelblue":            canvas.Steelblue,
+		"tan":                  canvas.Tan,
+		"teal":                 canvas.Teal,
+		"thistle":              canvas.Thistle,
+		"tomato":               canvas.Tomato,
+		"turquoise":            canvas.Turquoise,
+		"violet":               canvas.Violet,
+		"wheat":                canvas.Wheat,
+		"white":                canvas.White,
+		"whitesmoke":           canvas.Whitesmoke,
+		"yellow":               canvas.Yellow,
+		"yellowgreen":          canvas.Yellowgreen,
+		"transparent":          canvas.Transparent,
 	}
 	if col, ok := colors[nameLower]; ok {
 		return &col
