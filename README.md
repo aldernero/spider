@@ -77,47 +77,22 @@ Create a `chart.yaml` file:
 
 ```yaml
 options:
-  width: 500
-  height: 500
-  plot_scale: 0.7
   connect_type: polygon
-  unit_type: pixels
   title: "Performance Comparison"
 
 data:
+  axes:
+    - name: "throughput"
+    - name: "latency"
+      max: 100
+    - name: "cost"
+
   series:
     - name: "System A"
       data:
         throughput: 1000000
         latency: 50
         cost: 5000
-      style:
-        line:
-          color: "#FF0000"
-          thickness: 1.0
-        fill:
-          color: "#FF0000"
-          opacity: 0.2
-        point:
-          shape: circle
-          size: 3.0
-          show: true
-
-  axes:
-    - name: "throughput"
-      max: 2000000
-      options:
-        scale: linear
-        show_name: true
-        show_axis: true
-    - name: "latency"
-      max: 100
-      options:
-        scale: linear
-    - name: "cost"
-      max: 10000
-      options:
-        scale: linear
 ```
 
 Then use the CLI tool:
