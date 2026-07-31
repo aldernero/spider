@@ -87,16 +87,94 @@ func TestSaveSVGWritesRequestedFillColor(t *testing.T) {
 	c.Data.Series[0].Options.FillColor = "#3B82F6"
 	c.Data.Series[0].Options.FillOpacity = 0.7
 
-	svg := renderSVG(t, c)
+	svg := strings.ToLower(renderSVG(t, c))
 
-	if strings.Contains(svg, "rgba(84,186,255") {
+	// (84,186,255) is #54baff, the over-bright value the bug produced
+	if strings.Contains(svg, "#54baff") {
 		t.Error("fill color is over-bright: the color is being treated as alpha-premultiplied")
 	}
 	// The renderer stores colors premultiplied internally, so a round trip can
-	// shift a component by one.
-	if !strings.Contains(svg, "rgba(58,129,246") && !strings.Contains(svg, "rgba(59,130,246") {
-		t.Errorf("SVG does not contain the requested fill color #3B82F6 (59,130,246); got:\n%s", excerptRGBA(svg))
+	// shift a component by one: #3b82f6 comes back as #3a81f6.
+	if !strings.Contains(svg, "#3a81f6") && !strings.Contains(svg, "#3b82f6") {
+		t.Errorf("SVG does not contain the requested fill color #3B82F6; got fills:\n%s", excerptFills(svg))
 	}
+}
+
+// The renderer writes translucent paints as CSS Color 4 rgba(), which SVG 1.1
+// renderers such as Inkscape cannot parse: they fall back to the initial value
+// and paint every translucent shape solid black.
+func TestSaveSVGAvoidsRGBAFunctionalNotation(t *testing.T) {
+	c := newTestChart(t)
+	c.Data.Series[0].Options.FillColor = "#3B82F6"
+	c.Data.Series[0].Options.FillOpacity = 0.7
+
+	svg := renderSVG(t, c)
+
+	if strings.Contains(svg, "rgba(") {
+		t.Errorf("output uses rgba() notation, which SVG 1.1 renderers paint black:\n%s", excerptRGBA(svg))
+	}
+	if !strings.Contains(svg, "fill-opacity:") {
+		t.Error("translucent fill should carry a separate fill-opacity property")
+	}
+}
+
+func TestSVGToSVG11Colors(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			name: "translucent fill",
+			in:   `style="fill:rgba(58,129,246,.70196078);stroke-width:.75"`,
+			want: `style="fill:#3a81f6;fill-opacity:.70196078;stroke-width:.75"`,
+		},
+		{
+			name: "translucent stroke",
+			in:   `style="stroke:rgba(255,0,0,.5)"`,
+			want: `style="stroke:#ff0000;stroke-opacity:.5"`,
+		},
+		{
+			name: "both",
+			in:   `style="fill:rgba(0,0,0,0);stroke:rgba(1,2,3,.25)"`,
+			want: `style="fill:#000000;fill-opacity:0;stroke:#010203;stroke-opacity:.25"`,
+		},
+		{
+			name: "opaque hex is left alone",
+			in:   `style="fill:none;stroke:#000;stroke-width:.25"`,
+			want: `style="fill:none;stroke:#000;stroke-width:.25"`,
+		},
+		{
+			name: "out of range components are left alone",
+			in:   `style="fill:rgba(300,0,0,.5)"`,
+			want: `style="fill:rgba(300,0,0,.5)"`,
+		},
+		{
+			name: "gradient stop colors are untouched",
+			in:   `<stop stop-color="rgba(1,2,3,.5)"/>`,
+			want: `<stop stop-color="rgba(1,2,3,.5)"/>`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := string(svgToSVG11Colors([]byte(tt.in))); got != tt.want {
+				t.Errorf("svgToSVG11Colors() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// excerptFills lists the distinct fill declarations in an SVG, for failure output.
+func excerptFills(svg string) string {
+	seen := map[string]bool{}
+	var found []string
+	for _, part := range strings.Split(svg, "fill:") {
+		if end := strings.IndexAny(part, ";\""); end > 0 && !seen[part[:end]] {
+			seen[part[:end]] = true
+			found = append(found, "fill:"+part[:end])
+		}
+	}
+	return strings.Join(found, "\n")
 }
 
 func excerptRGBA(svg string) string {
