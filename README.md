@@ -15,9 +15,20 @@ A Go library and CLI tool for generating spider plots (radar charts) with **inde
 
 ## Installation
 
+As a library:
+
 ```bash
 go get github.com/aldernero/spider
 ```
+
+The CLI, from source:
+
+```bash
+go install github.com/aldernero/spider/cmd/spider-cli@latest
+```
+
+Or download a prebuilt binary for Linux, macOS or Windows (amd64/arm64) from the
+[releases page](https://github.com/aldernero/spider/releases).
 
 ## Quick Start
 
@@ -27,45 +38,51 @@ go get github.com/aldernero/spider
 package main
 
 import (
-    "log"
-    "github.com/aldernero/spider"
-    "github.com/tdewolff/canvas"
-    "github.com/tdewolff/canvas/renderers"
+	"log"
+
+	"github.com/aldernero/spider"
 )
 
 func main() {
-  // Create a chart
-  chart := spider.NewChart()
-  // add axes
-  chart.AddAxis("axis1")
-  chart.AddAxis("axis2")
-  chart.AddAxis("axis3")
-  chart.AddAxis("axis4")
-  chart.AddAxis("axis5")
-  // add series with datapoints
-  chart.AddSeries("series1", map[string]float64{
-    "axis1": 1000,
-    "axis2": 2.0,
-    "axis3": 3.0,
-    "axis4": 1000000,
-    "axis5": 5.0,
-  })
-  chart.AddSeries("series2", map[string]float64{
-    "axis1": 1500,
-    "axis2": 1.0,
-    "axis3": 2.5,
-    "axis4": 2100000,
-    "axis5": 12.0,
-  })
-  // customize
-	chart.Options.Subtitle = "Subtitle"
+	// Create a chart
+	chart := spider.NewChart()
+
+	// Add axes
+	for _, name := range []string{"axis1", "axis2", "axis3", "axis4", "axis5"} {
+		if err := chart.AddAxis(name); err != nil {
+			log.Fatalf("Failed to add axis %s: %v", name, err)
+		}
+	}
+
+	// Add series with datapoints
+	if err := chart.AddSeries("series1", map[string]float64{
+		"axis1": 1000,
+		"axis2": 2.0,
+		"axis3": 3.0,
+		"axis4": 1000000,
+		"axis5": 5.0,
+	}); err != nil {
+		log.Fatalf("Failed to add series: %v", err)
+	}
+	if err := chart.AddSeries("series2", map[string]float64{
+		"axis1": 1500,
+		"axis2": 1.0,
+		"axis3": 2.5,
+		"axis4": 2100000,
+		"axis5": 12.0,
+	}); err != nil {
+		log.Fatalf("Failed to add series: %v", err)
+	}
+
+	// Customize
 	chart.Options.Title = "Title"
-  // save chart
+	chart.Options.Subtitle = "Subtitle"
+
+	// Save chart
 	if err := chart.Save("output.png"); err != nil {
 		log.Fatalf("Failed to save chart: %v", err)
 	}
 }
-
 ```
 The code produces the following spider chart
 <img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/d2bcefc3-4d31-448d-a3f1-3b1faf054155" />
@@ -77,8 +94,9 @@ Create a `chart.yaml` file:
 
 ```yaml
 options:
-  connect_type: polygon
   title: "Performance Comparison"
+  plot_options:
+    connect_type: polygon
 
 data:
   axes:
@@ -128,7 +146,17 @@ See the `examples` folder for more details.
 
 ### Legend Placement
 
-- `top`, `bottom`, `left`, `right`
+- `top`, `bottom`, `left`, `right`, `none`
+
+### Colors
+
+Colors are written as CSS color names (`red`, `cornflowerblue`, case-insensitive),
+hex values (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), or `transparent`. An
+unrecognized color is a validation error rather than a silently wrong chart.
+
+Where a series does not set its own color, it takes the next one from
+`options.colors`, cycling when there are more series than colors. `options.foreground`
+sets the fallback for axis lines, the plot outline, and text.
 
 ## API Overview
 
@@ -141,19 +169,25 @@ See the `examples` folder for more details.
 
 ### Key Functions
 
-- `NewChart(options, data)`: Create a chart programmatically
-- `NewChartFromFile(filename)`: Load chart from JSON/YAML file
-- `Save(chart, filename)`: Save chart to PNG or SVG (auto-detects format)
-- `SavePNG(chart, filename)`: Save as PNG
-- `SaveSVG(chart, filename)`: Save as SVG
+- `NewChart()`: Create an empty chart with default options
+- `NewChartWithData(data)`: Create a chart from data, with default options
+- `NewChartWithDataAndOptions(data, options)`: Create a fully specified chart
+- `NewChartFromFile(filename)`: Load a chart from a JSON/YAML file
+- `(*Chart).AddAxis(name)` / `(*Chart).AddSeries(name, data)`: Build a chart programmatically
+- `(*Chart).Save(filename)`: Save to PNG or SVG (auto-detects from the extension)
+- `(*Chart).SavePNG(filename)` / `(*Chart).SaveSVG(filename)`: Save in a specific format
 
 ### Auto-Max Calculation
 
-If an axis doesn't specify a `max` value, it will be automatically calculated from the series data with 10% padding. This makes it easy to create charts without manually setting all axis ranges.
+If an axis doesn't specify a `max` value, it is calculated from the series data with
+15% headroom (`AutoscaleAxisPaddingFactor`). This makes it easy to create charts
+without manually setting all axis ranges. An axis with no data defaults to a max of 1.
 
 ## Examples
 
-See `cmd/main.go` for a complete programmatic example, or check the `cmd/spider-cli` directory for the CLI tool implementation.
+See `examples/from-code/main.go` for a complete programmatic example, `examples/devops`
+and `examples/ssd-compare` for config-driven ones, or the `cmd/spider-cli` directory for
+the CLI tool implementation.
 
 Some output from the `examples/` folder:
 
@@ -164,8 +198,12 @@ Some output from the `examples/` folder:
 
 ## Limitations
 
-- Maximum 50 axes per chart
+- Minimum 3, maximum 50 axes per chart
 - Maximum 20 series per chart
+- Every series must supply a value for every axis
+- Axis scales are linear; the `ScaleType` values are declared but not yet applied
+- A `Chart` is not safe for concurrent use, though rendering separate charts
+  from multiple goroutines is fine
 
 ## License
 
