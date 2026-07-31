@@ -150,7 +150,8 @@ See the `examples` folder for more details.
 
 ### Colors
 
-Colors are written as CSS color names (`red`, `cornflowerblue`, case-insensitive),
+Colors are written as CSS color names (`red`, `cornflowerblue`, case-insensitive),<img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/8061e447-c867-463d-94b3-db1cb8deace3" />
+
 hex values (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), or `transparent`. An
 unrecognized color is a validation error rather than a silently wrong chart.
 
@@ -191,9 +192,12 @@ the CLI tool implementation.
 
 Some output from the `examples/` folder:
 
-<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/dc42b4a9-1362-4c5c-ae4c-f1f88d70ad37" />
-<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/7dde1c32-4bba-46fd-a2a8-bdf010cb64ca" />
-<img width="512" height="512" alt="output" src="https://github.com/user-attachments/assets/5a40596c-3be8-43a1-8e7c-888e52e19dbb" />
+<img width="945" height="945" alt="output" src="https://github.com/user-attachments/assets/f99f2832-9947-41d7-9272-d7b2b7d6bab7" />
+
+<img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/40000910-f251-4a9e-9775-fc1f03ec6114" />
+
+<img width="756" height="756" alt="output" src="https://github.com/user-attachments/assets/ce73ac4b-aa31-4e3d-a506-5a741376f452" />
+
 
 
 ## Limitations
