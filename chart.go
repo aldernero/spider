@@ -67,15 +67,13 @@ func DefaultChartOptions() ChartOptions {
 
 func DefaultTitleStyle() Font {
 	return Font{
-		Size:  DefaultTitleFontSize,
-		Color: Color("#000000"),
+		Size: DefaultTitleFontSize,
 	}
 }
 
 func DefaultSubtitleStyle() Font {
 	return Font{
-		Size:  DefaultSubtitleFontSize,
-		Color: Color("#000000"),
+		Size: DefaultSubtitleFontSize,
 	}
 }
 
@@ -92,7 +90,6 @@ func DefaultPlotOptions() PlotOptions {
 	return PlotOptions{
 		Scale:            DefaultPlotScale,
 		OutlineThickness: DefaultPlotOutlineThickness,
-		OutlineColor:     Color("#000000"),
 		ConnectType:      DefaultConnectType,
 		Margin:           DefaultPlotMargin,
 		Padding:          DefaultPlotPadding,
@@ -135,9 +132,13 @@ func NewChart() *Chart {
 
 // Radius returns the radius of the plot area in millimeters
 func (c *Chart) Radius() float64 {
-	canvasWidth := c.Width()
-	canvasHeight := c.Height()
-	return c.Options.PlotOptions.Scale*math.Min(canvasWidth, canvasHeight)/2 - c.Options.PlotOptions.Padding
+	// Derived from the plot rect once it is known, so the drawn plot and the
+	// rect reserved for it cannot disagree on a non-square canvas.
+	extent := math.Min(c.Width(), c.Height()) * c.Options.PlotOptions.Scale
+	if w, h := c.plotRect.W(), c.plotRect.H(); w > 0 && h > 0 {
+		extent = math.Min(w, h)
+	}
+	return math.Max(0, extent/2-c.Options.PlotOptions.Padding)
 }
 
 func (c *Chart) AddAxis(name string) error {
@@ -217,16 +218,31 @@ func (c *Chart) Draw(ctx *canvas.Context) error {
 
 	c.calcRects()
 
+	// Resolve every axis maximum once. Both drawAxes and drawSeries need them,
+	// and computing them per axis per series is quadratic in the series count.
+	maxima := c.axisMaxima()
+
 	// Draw background
 	c.drawBackground(ctx)
 	c.drawTitle(ctx)
 	c.drawSubtitle(ctx)
 	c.drawPlotBackground(ctx)
-	c.drawAxes(ctx)
-	c.drawSeries(ctx)
+	c.drawAxes(ctx, maxima)
+	c.drawSeries(ctx, maxima)
 	c.drawLegend(ctx)
 
 	return nil
+}
+
+// axisMaxima returns the maximum value for each axis, keyed by axis name.
+func (c *Chart) axisMaxima() map[string]float64 {
+	seriesData := getAllSeriesData(c.Data.Series)
+	maxima := make(map[string]float64, len(c.Data.Axes))
+	for i := range c.Data.Axes {
+		axis := &c.Data.Axes[i]
+		maxima[axis.Name] = axis.GetMax(seriesData)
+	}
+	return maxima
 }
 
 func (c *Chart) calcRects() {
@@ -250,15 +266,15 @@ func (c *Chart) calcRects() {
 		Y1: plotY + plotHeight,
 	}
 	// legend rect
+	legend := c.Options.LegendOptions
 	subtitleBottom := c.plotRect.Y1 + c.Options.PlotOptions.Margin
-	switch c.Options.LegendOptions.Placement {
+	switch legend.Placement {
 	case LegendPlacementTop:
-		targetHeight := c.Options.LegendOptions.LegendStyle.Size*mmPerPt*smidge + c.Options.LegendOptions.Padding
-		if targetHeight < c.Options.LegendOptions.MinHeight {
-			targetHeight = c.Options.LegendOptions.MinHeight
-			c.plotRect.Y0 -= targetHeight
-			c.plotRect.Y1 -= targetHeight
-		}
+		// Reserve the legend's height by moving the plot down, so a legend taller
+		// than the gap above the plot does not overlap it.
+		targetHeight := clamp(legend.LegendStyle.Size*mmPerPt*smidge+legend.Padding, legend.MinHeight, legend.MaxHeight)
+		c.plotRect.Y0 -= targetHeight
+		c.plotRect.Y1 -= targetHeight
 		c.legendRect = canvas.Rect{ // above plot + plot margin
 			X0: c.Options.PageMargin,
 			Y0: c.plotRect.Y1 + c.Options.PlotOptions.Margin,
@@ -267,22 +283,16 @@ func (c *Chart) calcRects() {
 		}
 		subtitleBottom = c.legendRect.Y1 + c.Options.SubtitleMargin
 	case LegendPlacementBottom:
-		// targetHeight := c.plotRect.Y0 - c.Options.PageMargin
-		// if targetHeight < c.Options.LegendOptions.MinHeight {
-		// 	targetHeight = c.Options.LegendOptions.MinHeight
-		// 	c.plotRect.Y0 += targetHeight
-		// 	c.plotRect.Y1 += targetHeight
-		// }
+		targetHeight := clamp(c.plotRect.Y0-c.Options.PageMargin-c.Options.PlotOptions.Margin, legend.MinHeight, legend.MaxHeight)
 		c.legendRect = canvas.Rect{
 			X0: c.Options.PageMargin,
-			Y0: c.Options.PageMargin,
+			Y0: c.plotRect.Y0 - c.Options.PlotOptions.Margin - targetHeight,
 			X1: w - c.Options.PageMargin,
 			Y1: c.plotRect.Y0 - c.Options.PlotOptions.Margin,
 		}
 	case LegendPlacementLeft:
-		targetWidth := c.plotRect.X0 - c.Options.PageMargin
-		if targetWidth < c.Options.LegendOptions.MinWidth {
-			targetWidth = c.Options.LegendOptions.MinWidth
+		targetWidth := clamp(c.plotRect.X0-c.Options.PageMargin, legend.MinWidth, legend.MaxWidth)
+		if targetWidth > c.plotRect.X0-c.Options.PageMargin {
 			c.plotRect.X0 += targetWidth
 			c.plotRect.X1 += targetWidth
 		}
@@ -293,9 +303,8 @@ func (c *Chart) calcRects() {
 			Y1: c.plotRect.Y1,
 		}
 	case LegendPlacementRight:
-		targetWidth := w - c.plotRect.X1 - c.Options.PageMargin
-		if targetWidth < c.Options.LegendOptions.MinWidth {
-			targetWidth = c.Options.LegendOptions.MinWidth
+		targetWidth := clamp(w-c.plotRect.X1-c.Options.PageMargin, legend.MinWidth, legend.MaxWidth)
+		if targetWidth > w-c.plotRect.X1-c.Options.PageMargin {
 			c.plotRect.X1 -= targetWidth
 			c.plotRect.X0 -= targetWidth
 		}
@@ -305,11 +314,15 @@ func (c *Chart) calcRects() {
 			X1: w - c.Options.PageMargin,
 			Y1: c.plotRect.Y1,
 		}
+	case LegendPlacementNone:
+		c.legendRect = canvas.Rect{}
 	}
 	// subtitle rect
-	subtitleHeight := c.fonts["subtitle"].LineHeight() * smidge
-	if c.Options.Subtitle == "" {
-		subtitleHeight = 0
+	subtitleHeight := 0.0
+	// fonts is populated by validate, which Draw runs first; guard so a caller
+	// reaching calcRects on its own degrades instead of panicking.
+	if face := c.fonts["subtitle"]; face != nil && c.Options.Subtitle != "" && c.Options.ShowSubtitle {
+		subtitleHeight = face.LineHeight() * smidge
 	}
 	c.subtitleRect = canvas.Rect{
 		X0: c.Options.PageMargin,

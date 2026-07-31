@@ -2,15 +2,13 @@ package spider
 
 func DefaultAxisLabelStyle() Font {
 	return Font{
-		Size:  DefaultAxisLabelFontSize,
-		Color: Color("#000000"),
+		Size: DefaultAxisLabelFontSize,
 	}
 }
 
 func DefaultTickLabelStyle() Font {
 	return Font{
-		Size:  DefaultTickLabelFontSize,
-		Color: Color("#000000"),
+		Size: DefaultTickLabelFontSize,
 	}
 }
 
@@ -37,7 +35,6 @@ type AxisOptions struct {
 func DefaultAxisOptions() AxisOptions {
 	return AxisOptions{
 		LineThickness:          DefaultAxisLineThickness,
-		LineColor:              Color("#000000"),
 		LabelOffset:            DefaultLabelOffset,
 		LabelStyle:             DefaultAxisLabelStyle(),
 		TickLabelStyle:         DefaultTickLabelStyle(),

@@ -25,10 +25,8 @@ func DefaultLegendOptions() LegendOptions {
 		LineLength:       DefaultLegendLineLength,
 		LineThickness:    DefaultLegendLineThickness,
 		OutlineThickness: 0.5,
-		OutlineColor:     Color("#000000"),
 		LegendStyle: Font{
-			Size:  DefaultLegendFontSize,
-			Color: Color("#000000"),
+			Size: DefaultLegendFontSize,
 		},
 		Padding:     2.0,
 		ShowOutline: false,
