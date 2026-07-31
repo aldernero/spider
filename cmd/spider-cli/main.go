@@ -9,12 +9,25 @@ import (
 	"github.com/aldernero/spider"
 )
 
+// Stamped at build time by GoReleaser via -ldflags.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
 	var (
-		configFile = flag.String("config", "", "Path to configuration file (JSON or YAML)")
-		outputFile = flag.String("output", "", "Output file path (PNG or SVG)")
+		configFile  = flag.String("config", "", "Path to configuration file (JSON or YAML)")
+		outputFile  = flag.String("output", "", "Output file path (PNG or SVG)")
+		showVersion = flag.Bool("version", false, "Print version information and exit")
 	)
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("spider-cli %s (commit %s, built %s)\n", version, commit, date)
+		return
+	}
 
 	if *configFile == "" {
 		fmt.Fprintf(os.Stderr, "Error: -config flag is required\n")

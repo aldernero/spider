@@ -7,3 +7,9 @@ tmp/
 test/
 
 .vscode/
+
+# GoReleaser build output
+dist/
+
+# Coverage output
+coverage.out
